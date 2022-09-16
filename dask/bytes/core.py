@@ -80,17 +80,17 @@ def read_bytes(
 
     fs, fs_token, paths = get_fs_token_paths(urlpath, mode="rb", storage_options=kwargs)
 
-    if len(paths) == 0:
+    if not paths:
         raise OSError("%s resolved to no files" % urlpath)
 
-    if blocksize is not None:
+    if blocksize:
         if isinstance(blocksize, str):
             blocksize = parse_bytes(blocksize)
         if not is_integer(blocksize):
             raise TypeError("blocksize must be an integer")
         blocksize = int(blocksize)
 
-    if blocksize is None:
+    if not blocksize:
         offsets = [[0]] * len(paths)
         lengths = [[None]] * len(paths)
     else:
@@ -101,13 +101,13 @@ def read_bytes(
                 comp = infer_compression(path)
             else:
                 comp = compression
-            if comp is not None:
+            if comp:
                 raise ValueError(
                     "Cannot do chunked reads on compressed files. "
                     "To read, set blocksize=None"
                 )
             size = fs.info(path)["size"]
-            if size is None:
+            if not size:
                 raise ValueError(
                     "Backing filesystem couldn't determine file size, cannot "
                     "do chunked reads. To read, set blocksize=None."
@@ -120,16 +120,16 @@ def read_bytes(
             else:
                 # shrink blocksize to give same number of parts
                 if size % blocksize and size > blocksize:
-                    blocksize1 = size / (size // blocksize)
+                    blocksize_tmp = size / (size // blocksize)
                 else:
-                    blocksize1 = blocksize
+                    blocksize_tmp = blocksize
                 place = 0
                 off = [0]
                 length = []
 
                 # figure out offsets, spreading around spare bytes
-                while size - place > (blocksize1 * 2) - 1:
-                    place += blocksize1
+                while size - place > (blocksize_tmp * 2) - 1:
+                    place += blocksize_tmp
                     off.append(int(place))
                     length.append(off[-1] - off[-2])
                 length.append(size - off[-1])
